@@ -1,0 +1,1 @@
+// Initializes Supabase client using VITE\_ env variables
