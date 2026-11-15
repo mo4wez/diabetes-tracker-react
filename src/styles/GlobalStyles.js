@@ -1,4 +1,3 @@
-// Reset, RTL/LTR direction setup, and @media print rules
 import { createGlobalStyle } from "styled-components";
 
 export const GlobalStyles = createGlobalStyle`
@@ -11,6 +10,7 @@ export const GlobalStyles = createGlobalStyle`
   html {
     direction: rtl;
     font-size: 16px;
+    color-scheme: ${({ theme }) => theme.mode};
     -webkit-font-smoothing: antialiased;
   }
 
@@ -19,6 +19,7 @@ export const GlobalStyles = createGlobalStyle`
     background-color: ${({ theme }) => theme.colors.bgApp};
     color: ${({ theme }) => theme.colors.textPrimary};
     line-height: 1.6;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   input, button, textarea, select {
@@ -27,7 +28,6 @@ export const GlobalStyles = createGlobalStyle`
     color: inherit;
   }
 
-  /* Keep numeric blood glucose and insulin inputs left-to-right for clean alignment */
   input[type='number'],
   input[type='time'],
   .ltr-number {
@@ -42,7 +42,6 @@ export const GlobalStyles = createGlobalStyle`
     background: none;
   }
 
-  /* Elements visible only on screen vs only when printing */
   .print-only {
     display: none !important;
   }
@@ -51,6 +50,10 @@ export const GlobalStyles = createGlobalStyle`
     @page {
       size: A4 landscape;
       margin: 10mm;
+    }
+
+    html {
+      color-scheme: light !important;
     }
 
     html, body {
@@ -69,7 +72,6 @@ export const GlobalStyles = createGlobalStyle`
       display: block !important;
     }
 
-    /* Prevent table rows or day cards from splitting awkwardly across pages */
     tr, .avoid-page-break {
       break-inside: avoid;
       page-break-inside: avoid;
