@@ -1,8 +1,39 @@
 import { NavLink, Outlet } from "react-router-dom";
 import styled from "styled-components";
-import { Sun, Moon } from "lucide-react";
+import {
+  Sun,
+  Moon,
+  LogOut,
+  CalendarDays,
+  BarChart3,
+  Stethoscope,
+} from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { useThemeMode } from "../../context/ThemeModeContext";
+
+const NAV_ITEMS = [
+  {
+    to: "/",
+    end: true,
+    desktopLabel: "ثبت هفتگی",
+    mobileLabel: "ثبت هفتگی",
+    icon: CalendarDays,
+  },
+  {
+    to: "/report",
+    end: false,
+    desktopLabel: "گزارش ماهانه و نمودار",
+    mobileLabel: "گزارش و نمودار",
+    icon: BarChart3,
+  },
+  {
+    to: "/checkups",
+    end: false,
+    desktopLabel: "آزمایش HbA1c و چکاپ",
+    mobileLabel: "چکاپ و HbA1c",
+    icon: Stethoscope,
+  },
+];
 
 export function AppLayout() {
   const { signOut } = useAuth();
@@ -10,36 +41,53 @@ export function AppLayout() {
 
   return (
     <Shell>
-      <Navbar className="no-print">
+      {/* Top Bar: Full nav on desktop, compact header on mobile */}
+      <TopNavbar className="no-print">
         <NavInner>
           <Brand>دفترچه پایش دیابت</Brand>
 
-          <NavLinks>
-            <StyledNavLink to="/" end>
-              ثبت هفتگی
-            </StyledNavLink>
-            <StyledNavLink to="/report">گزارش ماهانه و نمودار</StyledNavLink>
-            <StyledNavLink to="/checkups">آزمایش HbA1c و چکاپ</StyledNavLink>
-          </NavLinks>
+          <DesktopNavLinks>
+            {NAV_ITEMS.map(({ to, end, desktopLabel, icon: Icon }) => (
+              <DesktopNavLink key={to} to={to} end={end}>
+                <Icon size={16} />
+                <span>{desktopLabel}</span>
+              </DesktopNavLink>
+            ))}
+          </DesktopNavLinks>
 
           <RightActions>
-            <ThemeToggleBtn
+            <IconActionBtn
               type="button"
               onClick={toggleTheme}
               title={mode === "dark" ? "حالت روز" : "حالت شب"}
               aria-label="تغییر حالت شب و روز"
             >
               {mode === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-            </ThemeToggleBtn>
+            </IconActionBtn>
 
-            <LogoutButton onClick={signOut}>خروج</LogoutButton>
+            <LogoutButton type="button" onClick={signOut} title="خروج از حساب">
+              <LogOut size={16} />
+              <LogoutText>خروج</LogoutText>
+            </LogoutButton>
           </RightActions>
         </NavInner>
-      </Navbar>
+      </TopNavbar>
 
       <MainContent>
         <Outlet />
       </MainContent>
+
+      {/* Mobile Bottom Tab Bar (hidden on desktop & print) */}
+      <MobileBottomNav className="no-print" aria-label="منوی اصلی موبایل">
+        {NAV_ITEMS.map(({ to, end, mobileLabel, icon: Icon }) => (
+          <MobileTabLink key={to} to={to} end={end}>
+            <IconWrap>
+              <Icon size={20} />
+            </IconWrap>
+            <span>{mobileLabel}</span>
+          </MobileTabLink>
+        ))}
+      </MobileBottomNav>
     </Shell>
   );
 }
@@ -50,22 +98,21 @@ const Shell = styled.div`
   flex-direction: column;
 `;
 
-const Navbar = styled.nav`
+const TopNavbar = styled.nav`
   background-color: ${({ theme }) => theme.colors.bgSurface};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: 30;
 `;
 
 const NavInner = styled.div`
   max-width: 1320px;
   margin: 0 auto;
-  padding: 12px ${({ theme }) => theme.spacing.md};
+  padding: 10px ${({ theme }) => theme.spacing.md};
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
   gap: 12px;
 `;
 
@@ -73,17 +120,24 @@ const Brand = styled.span`
   font-weight: 700;
   font-size: 1.05rem;
   color: ${({ theme }) => theme.colors.primary};
+  white-space: nowrap;
 `;
 
-const NavLinks = styled.div`
+const DesktopNavLinks = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;
 
-const StyledNavLink = styled(NavLink)`
-  padding: 6px 14px;
+const DesktopNavLink = styled(NavLink)`
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
   border-radius: ${({ theme }) => theme.radii.md};
   font-size: 0.9rem;
   font-weight: 600;
@@ -110,12 +164,12 @@ const RightActions = styled.div`
   gap: 8px;
 `;
 
-const ThemeToggleBtn = styled.button`
+const IconActionBtn = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: ${({ theme }) => theme.radii.md};
   border: 1px solid ${({ theme }) => theme.colors.borderStrong};
   background-color: ${({ theme }) => theme.colors.bgSubtle};
@@ -131,18 +185,97 @@ const ThemeToggleBtn = styled.button`
 `;
 
 const LogoutButton = styled.button`
-  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
   border-radius: ${({ theme }) => theme.radii.md};
   border: 1px solid ${({ theme }) => theme.colors.borderStrong};
+  background-color: ${({ theme }) => theme.colors.bgSubtle};
   font-size: 0.85rem;
+  font-weight: 600;
   color: ${({ theme }) => theme.colors.textSecondary};
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
 
   &:hover {
     border-color: ${({ theme }) => theme.colors.glucose.low.border};
     color: ${({ theme }) => theme.colors.glucose.low.text};
   }
+
+  @media (max-width: 480px) {
+    padding: 0 10px;
+  }
+`;
+
+const LogoutText = styled.span`
+  @media (max-width: 480px) {
+    display: none;
+  }
 `;
 
 const MainContent = styled.div`
   flex: 1;
+
+  /* Prevent mobile bottom tab bar from covering the bottom of cards/tables */
+  @media (max-width: 768px) {
+    padding-bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+  }
+
+  @media print {
+    padding-bottom: 0 !important;
+  }
+`;
+
+const MobileBottomNav = styled.nav`
+  display: none;
+
+  @media (max-width: 768px) {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    background-color: ${({ theme }) => theme.colors.bgSurface};
+    border-top: 1px solid ${({ theme }) => theme.colors.borderStrong};
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+  }
+`;
+
+const IconWrap = styled.span`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 14px;
+  border-radius: ${({ theme }) => theme.radii.full};
+  transition: background-color 0.15s ease;
+`;
+
+const MobileTabLink = styled(NavLink)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  padding: 2px 0;
+  -webkit-tap-highlight-color: transparent;
+
+  &.active {
+    color: ${({ theme }) => theme.colors.primary};
+    font-weight: 700;
+
+    ${IconWrap} {
+      background-color: ${({ theme }) => theme.colors.primaryLight};
+    }
+  }
 `;
