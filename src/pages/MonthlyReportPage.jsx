@@ -370,6 +370,10 @@ const PageWrapper = styled.div`
   margin: 0 auto;
   padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.md};
 
+  @media (max-width: 768px) {
+    padding: ${({ theme }) => theme.spacing.md} 12px;
+  }
+
   @media print {
     padding: 0;
     max-width: 100%;
@@ -387,6 +391,13 @@ const ControlsBar = styled.div`
   border-radius: ${({ theme }) => theme.radii.lg};
   padding: ${({ theme }) => theme.spacing.md};
   margin-bottom: ${({ theme }) => theme.spacing.lg};
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px;
+    margin-bottom: ${({ theme }) => theme.spacing.md};
+  }
 `;
 
 const MonthNav = styled.div`
@@ -394,6 +405,14 @@ const MonthNav = styled.div`
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
 `;
 
 const MonthTitle = styled.h1`
@@ -402,6 +421,11 @@ const MonthTitle = styled.h1`
   min-width: 130px;
   text-align: center;
   color: ${({ theme }) => theme.colors.primary};
+
+  @media (max-width: 768px) {
+    min-width: 0;
+    font-size: 1rem;
+  }
 `;
 
 const NavBtn = styled.button`
@@ -411,17 +435,30 @@ const NavBtn = styled.button`
   border: 1px solid ${({ theme }) => theme.colors.borderStrong};
   font-size: 0.85rem;
   font-weight: 600;
+  white-space: nowrap;
+
+  @media (max-width: 768px) {
+    padding: 7px 10px;
+    font-size: 0.8rem;
+  }
 `;
 
 const CurrentBtn = styled(NavBtn)`
   background-color: ${({ theme }) => theme.colors.primaryLight};
   border-color: transparent;
   color: ${({ theme }) => theme.colors.primary};
+
+  @media (max-width: 768px) {
+    grid-column: 1 / -1;
+    width: 100%;
+    padding: 8px;
+  }
 `;
 
 const PrintButton = styled.button`
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 8px 16px;
   border-radius: ${({ theme }) => theme.radii.md};
@@ -432,6 +469,11 @@ const PrintButton = styled.button`
 
   &:hover {
     background-color: ${({ theme }) => theme.colors.primaryHover};
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    padding: 9px 14px;
   }
 `;
 
@@ -455,10 +497,24 @@ const SummaryGrid = styled.section`
   gap: 12px;
   margin-bottom: ${({ theme }) => theme.spacing.md};
 
+  @media (max-width: 600px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+
+    /* Span the 5th card neatly across the bottom row */
+    > div:last-child {
+      grid-column: 1 / -1;
+    }
+  }
+
   @media print {
     grid-template-columns: repeat(5, 1fr);
     gap: 6px;
     margin-bottom: 8px;
+
+    > div:last-child {
+      grid-column: auto;
+    }
   }
 `;
 
@@ -468,10 +524,16 @@ const StatCard = styled.div`
   border-radius: ${({ theme }) => theme.radii.md};
   padding: 12px 14px;
 
+  @media (max-width: 600px) {
+    padding: 10px 12px;
+    text-align: center;
+  }
+
   @media print {
     background-color: #ffffff !important;
     border: 1px solid #999 !important;
     padding: 5px 8px;
+    text-align: right;
   }
 `;
 
