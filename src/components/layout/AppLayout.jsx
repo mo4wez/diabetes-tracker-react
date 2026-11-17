@@ -219,10 +219,11 @@ const LogoutText = styled.span`
 
 const MainContent = styled.div`
   flex: 1;
+  width: 100%;
+  min-width: 0;
 
-  /* Prevent mobile bottom tab bar from covering the bottom of cards/tables */
   @media (max-width: 768px) {
-    padding-bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   }
 
   @media print {
@@ -240,11 +241,13 @@ const MobileBottomNav = styled.nav`
     bottom: 0;
     left: 0;
     right: 0;
-    z-index: 40;
+    width: 100%;
+    box-sizing: border-box;
+    z-index: 100;
     background-color: ${({ theme }) => theme.colors.bgSurface};
     border-top: 1px solid ${({ theme }) => theme.colors.borderStrong};
-    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
-    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.14);
+    padding: 8px 6px calc(8px + env(safe-area-inset-bottom, 0px));
   }
 `;
 

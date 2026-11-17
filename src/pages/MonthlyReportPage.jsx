@@ -608,7 +608,9 @@ const ChartContainer = styled.div`
 `;
 
 const TableWrapper = styled.div`
+  width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   background-color: ${({ theme }) => theme.colors.bgSurface};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radii.lg};
@@ -622,6 +624,7 @@ const TableWrapper = styled.div`
 
 const LogTable = styled.table`
   width: 100%;
+  min-width: 760px;
   border-collapse: collapse;
   font-size: 0.85rem;
 
@@ -630,6 +633,7 @@ const LogTable = styled.table`
     border: 1px solid ${({ theme }) => theme.colors.border};
     padding: 7px 8px;
     text-align: center;
+    white-space: nowrap;
   }
 
   th {
@@ -639,6 +643,7 @@ const LogTable = styled.table`
   }
 
   @media print {
+    min-width: auto;
     font-size: 8.5pt;
     background-color: #ffffff !important;
     color: #000000 !important;
@@ -648,6 +653,7 @@ const LogTable = styled.table`
       border: 1px solid #888 !important;
       padding: 3px 4px;
       color: #000000 !important;
+      white-space: normal;
     }
 
     td {
