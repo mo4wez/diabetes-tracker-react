@@ -13,15 +13,37 @@ export function ThemeModeProvider({ children }) {
       : "light";
   });
 
+  const [isPrinting, setIsPrinting] = useState(false);
+
   useEffect(() => {
     localStorage.setItem("diabetes-tracker-theme", mode);
   }, [mode]);
+
+  // Automatically switch to lightTheme while printing, then restore user's theme
+  useEffect(() => {
+    const handleBeforePrint = () => setIsPrinting(true);
+    const handleAfterPrint = () => setIsPrinting(false);
+
+    window.addEventListener("beforeprint", handleBeforePrint);
+    window.addEventListener("afterprint", handleAfterPrint);
+
+    const mediaQuery = window.matchMedia("print");
+    const handleMediaChange = (e) => setIsPrinting(e.matches);
+    mediaQuery.addEventListener("change", handleMediaChange);
+
+    return () => {
+      window.removeEventListener("beforeprint", handleBeforePrint);
+      window.removeEventListener("afterprint", handleAfterPrint);
+      mediaQuery.removeEventListener("change", handleMediaChange);
+    };
+  }, []);
 
   const toggleTheme = () => {
     setMode((prev) => (prev === "light" ? "dark" : "light"));
   };
 
-  const activeTheme = mode === "dark" ? darkTheme : lightTheme;
+  // Force lightTheme during print regardless of current screen mode
+  const activeTheme = isPrinting || mode === "light" ? lightTheme : darkTheme;
 
   return (
     <ThemeModeContext.Provider value={{ mode, toggleTheme }}>

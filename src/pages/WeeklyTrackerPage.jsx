@@ -4,6 +4,7 @@ import { getTodayIso, shiftWeek } from "../lib/persianDate";
 import { useWeeklyLogs } from "../hooks/useWeeklyLogs";
 import { useAuth } from "../hooks/useAuth";
 import { DayCard } from "../components/tracker/DayCard";
+import { CheckupAlertBanner } from "../components/tracker/CheckupAlertBanner";
 
 export function WeeklyTrackerPage() {
   const [anchorDate, setAnchorDate] = useState(() => getTodayIso());
@@ -22,6 +23,8 @@ export function WeeklyTrackerPage() {
 
   return (
     <PageWrapper>
+      <CheckupAlertBanner />
+
       <TopBar className="no-print">
         <BrandTitle>پایش روزانه قند خون و انسولین</BrandTitle>
 

@@ -1,29 +1,50 @@
 import { useState } from "react";
-import styled from "styled-components";
+import styled, { useTheme } from "styled-components";
+import { Trash2 } from "lucide-react";
 import { getGlucoseTheme } from "../../styles/theme";
-import { useSaveMealLog } from "../../hooks/useLogMutations";
+import { useSaveMealLog, useDeleteMealLog } from "../../hooks/useLogMutations";
 
 const MEAL_LABELS = {
   breakfast: "صبحانه",
   lunch: "ناهار",
   dinner: "شام",
+  snack: "میان‌وعده",
 };
 
-export function MealSlotRow({ mealType, meal, logDate, dailyLogId }) {
+export function MealSlotRow({
+  mealType,
+  meal,
+  logDate,
+  dailyLogId,
+  defaultEditing = false,
+  onCancelNew,
+}) {
+  const theme = useTheme();
   const saveMeal = useSaveMealLog();
-  const [isEditing, setIsEditing] = useState(false);
+  const deleteMeal = useDeleteMealLog();
+  const [isEditing, setIsEditing] = useState(defaultEditing);
+
+  const defaultDose = mealType === "snack" ? "" : 4;
 
   const [food, setFood] = useState(meal?.food_description || "");
-  const [dose, setDose] = useState(meal?.novorapid_dose ?? 4);
+  const [dose, setDose] = useState(meal?.novorapid_dose ?? defaultDose);
   const [postBg, setPostBg] = useState(meal?.post_meal_glucose ?? "");
   const [notes, setNotes] = useState(meal?.meal_notes || "");
 
   const handleOpenEdit = () => {
     setFood(meal?.food_description || "");
-    setDose(meal?.novorapid_dose ?? 4);
+    setDose(meal?.novorapid_dose ?? defaultDose);
     setPostBg(meal?.post_meal_glucose ?? "");
     setNotes(meal?.meal_notes || "");
     setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    if (!meal && onCancelNew) {
+      onCancelNew();
+      return;
+    }
+    setIsEditing(false);
   };
 
   const handleSave = (e) => {
@@ -40,12 +61,26 @@ export function MealSlotRow({ mealType, meal, logDate, dailyLogId }) {
         mealNotes: notes.trim(),
       },
       {
-        onSuccess: () => setIsEditing(false),
+        onSuccess: () => {
+          setIsEditing(false);
+          if (!meal && onCancelNew) onCancelNew();
+        },
       },
     );
   };
 
-  const bgColors = getGlucoseTheme(meal?.post_meal_glucose, "post_meal");
+  const handleDelete = () => {
+    if (!meal?.id) return;
+    deleteMeal.mutate(meal.id, {
+      onSuccess: () => setIsEditing(false),
+    });
+  };
+
+  const bgColors = getGlucoseTheme(
+    meal?.post_meal_glucose,
+    "post_meal",
+    theme.mode,
+  );
 
   if (isEditing) {
     return (
@@ -59,6 +94,7 @@ export function MealSlotRow({ mealType, meal, logDate, dailyLogId }) {
               step="0.5"
               min="0"
               max="50"
+              placeholder={mealType === "snack" ? "0" : "4"}
               value={dose}
               onChange={(e) => setDose(e.target.value)}
             />
@@ -68,7 +104,11 @@ export function MealSlotRow({ mealType, meal, logDate, dailyLogId }) {
 
         <TextInput
           type="text"
-          placeholder="چه غذایی خوردید؟ (مثلاً: نان سنگک، پنیر، گردو)"
+          placeholder={
+            mealType === "snack"
+              ? "شرح میان‌وعده یا دلیل دوز اصلاحی (مثلاً: میوه یا اصلاح قند بالا)"
+              : "چه غذایی خوردید؟ (مثلاً: نان سنگک، پنیر، گردو)"
+          }
           value={food}
           onChange={(e) => setFood(e.target.value)}
           autoFocus
@@ -96,12 +136,26 @@ export function MealSlotRow({ mealType, meal, logDate, dailyLogId }) {
         </BottomRow>
 
         <Actions className="no-print">
-          <SaveBtn type="submit" disabled={saveMeal.isPending}>
-            {saveMeal.isPending ? "در حال ذخیره..." : "ثبت"}
-          </SaveBtn>
-          <CancelBtn type="button" onClick={() => setIsEditing(false)}>
-            انصراف
-          </CancelBtn>
+          {meal?.id && (
+            <DeleteIconBtn
+              type="button"
+              onClick={handleDelete}
+              disabled={deleteMeal.isPending}
+              title="حذف این مورد"
+            >
+              <Trash2 size={14} />
+              <span>حذف</span>
+            </DeleteIconBtn>
+          )}
+
+          <RightBtns>
+            <CancelBtn type="button" onClick={handleCancel}>
+              انصراف
+            </CancelBtn>
+            <SaveBtn type="submit" disabled={saveMeal.isPending}>
+              {saveMeal.isPending ? "در حال ذخیره..." : "ثبت"}
+            </SaveBtn>
+          </RightBtns>
         </Actions>
       </EditForm>
     );
@@ -109,10 +163,15 @@ export function MealSlotRow({ mealType, meal, logDate, dailyLogId }) {
 
   return (
     <SummaryRow onClick={handleOpenEdit} title="برای ویرایش یا ثبت کلیک کنید">
-      <MealBadge>{MEAL_LABELS[mealType]}</MealBadge>
+      <MealBadge $isSnack={mealType === "snack"}>
+        {MEAL_LABELS[mealType]}
+      </MealBadge>
 
       <FoodText $empty={!meal?.food_description}>
-        {meal?.food_description || "ثبت نشده — کلیک کنید"}
+        {meal?.food_description ||
+          (mealType === "snack"
+            ? "دوز اصلاحی / میان‌وعده"
+            : "ثبت نشده — کلیک کنید")}
       </FoodText>
 
       <MetricsGroup>
@@ -147,8 +206,9 @@ const SummaryRow = styled.div`
 const MealBadge = styled.span`
   font-size: 0.8rem;
   font-weight: 700;
-  color: ${({ theme }) => theme.colors.textSecondary};
-  min-width: 48px;
+  color: ${({ theme, $isSnack }) =>
+    $isSnack ? theme.colors.novorapid : theme.colors.textSecondary};
+  min-width: 54px;
 `;
 
 const FoodText = styled.span`
@@ -225,7 +285,7 @@ const SmallNumberInput = styled.input`
   padding: 4px 6px;
   border: 1px solid ${({ theme }) => theme.colors.borderStrong};
   border-radius: ${({ theme }) => theme.radii.sm};
-  background-color: ${({ theme }) => theme.colors.bgSubtle};
+  background-color: ${({ theme }) => theme.colors.bgInput};
 `;
 
 const TextInput = styled.input`
@@ -234,6 +294,7 @@ const TextInput = styled.input`
   font-size: 0.85rem;
   border: 1px solid ${({ theme }) => theme.colors.borderStrong};
   border-radius: ${({ theme }) => theme.radii.sm};
+  background-color: ${({ theme }) => theme.colors.bgInput};
 `;
 
 const BottomRow = styled.div`
@@ -244,8 +305,29 @@ const BottomRow = styled.div`
 
 const Actions = styled.div`
   display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  justify-content: flex-end;
+`;
+
+const RightBtns = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-right: auto;
+`;
+
+const DeleteIconBtn = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: ${({ theme }) => theme.radii.sm};
+  color: ${({ theme }) => theme.colors.glucose.low.text};
+  font-size: 0.78rem;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.glucose.low.bg};
+  }
 `;
 
 const SaveBtn = styled.button`

@@ -1,9 +1,12 @@
 import { NavLink, Outlet } from "react-router-dom";
 import styled from "styled-components";
+import { Sun, Moon } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import { useThemeMode } from "../../context/ThemeModeContext";
 
 export function AppLayout() {
   const { signOut } = useAuth();
+  const { mode, toggleTheme } = useThemeMode();
 
   return (
     <Shell>
@@ -19,7 +22,18 @@ export function AppLayout() {
             <StyledNavLink to="/checkups">آزمایش HbA1c و چکاپ</StyledNavLink>
           </NavLinks>
 
-          <LogoutButton onClick={signOut}>خروج</LogoutButton>
+          <RightActions>
+            <ThemeToggleBtn
+              type="button"
+              onClick={toggleTheme}
+              title={mode === "dark" ? "حالت روز" : "حالت شب"}
+              aria-label="تغییر حالت شب و روز"
+            >
+              {mode === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+            </ThemeToggleBtn>
+
+            <LogoutButton onClick={signOut}>خروج</LogoutButton>
+          </RightActions>
         </NavInner>
       </Navbar>
 
@@ -86,6 +100,32 @@ const StyledNavLink = styled(NavLink)`
 
   &.active {
     background-color: ${({ theme }) => theme.colors.primaryLight};
+    color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+
+const RightActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const ThemeToggleBtn = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: ${({ theme }) => theme.radii.md};
+  border: 1px solid ${({ theme }) => theme.colors.borderStrong};
+  background-color: ${({ theme }) => theme.colors.bgSubtle};
+  color: ${({ theme }) => theme.colors.textPrimary};
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
     color: ${({ theme }) => theme.colors.primary};
   }
 `;

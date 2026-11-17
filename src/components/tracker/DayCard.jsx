@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
-import styled from "styled-components";
+import styled, { useTheme } from "styled-components";
+import { Plus } from "lucide-react";
 import { getGlucoseTheme } from "../../styles/theme";
 import { useSaveDailyLog } from "../../hooks/useLogMutations";
 import { MealSlotRow } from "./MealSlotRow";
 
 export function DayCard({ day }) {
+  const theme = useTheme();
   const { isoDate, jalaliShort, dayNameFa, isToday, log, meals } = day;
   const saveDaily = useSaveDailyLog();
 
@@ -12,6 +14,7 @@ export function DayCard({ day }) {
   const [lantus, setLantus] = useState(log?.lantus_dose ?? 12);
   const [activity, setActivity] = useState(log?.activity_level || "none");
   const [notes, setNotes] = useState(log?.daily_notes || "");
+  const [isAddingSnack, setIsAddingSnack] = useState(false);
   const [showContext, setShowContext] = useState(
     Boolean(
       log?.daily_notes ||
@@ -19,7 +22,6 @@ export function DayCard({ day }) {
     ),
   );
 
-  // Sync local inputs when switching weeks or after refetch
   useEffect(() => {
     setFasting(log?.fasting_glucose ?? "");
     setLantus(log?.lantus_dose ?? 12);
@@ -39,6 +41,12 @@ export function DayCard({ day }) {
     saveDaily.mutate({ logDate: isoDate, lantus_dose: numeric });
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.target.blur();
+    }
+  };
+
   const handleActivityChange = (e) => {
     const nextVal = e.target.value;
     setActivity(nextVal);
@@ -50,7 +58,7 @@ export function DayCard({ day }) {
     saveDaily.mutate({ logDate: isoDate, daily_notes: notes.trim() || null });
   };
 
-  const fastingColors = getGlucoseTheme(fasting, "fasting");
+  const fastingColors = getGlucoseTheme(fasting, "fasting", theme.mode);
 
   return (
     <Card $isToday={isToday} className="avoid-page-break">
@@ -74,6 +82,7 @@ export function DayCard({ day }) {
             value={fasting}
             onChange={(e) => setFasting(e.target.value)}
             onBlur={handleSaveFasting}
+            onKeyDown={handleKeyDown}
           />
         </VitalBox>
 
@@ -87,11 +96,21 @@ export function DayCard({ day }) {
             value={lantus}
             onChange={(e) => setLantus(e.target.value)}
             onBlur={handleSaveLantus}
+            onKeyDown={handleKeyDown}
           />
         </LantusBox>
       </VitalsGrid>
 
-      {/* 3 Main Meals */}
+      {saveDaily.isPending && (
+        <SaveHint className="no-print">در حال ذخیره...</SaveHint>
+      )}
+      {saveDaily.isError && (
+        <ErrorHint className="no-print">
+          خطا در ذخیره: {saveDaily.error.message}
+        </ErrorHint>
+      )}
+
+      {/* 3 Main Meals + Optional Snacks / Correction Doses */}
       <MealsList>
         {["breakfast", "lunch", "dinner"].map((type) => (
           <MealSlotRow
@@ -102,6 +121,36 @@ export function DayCard({ day }) {
             dailyLogId={log?.id}
           />
         ))}
+
+        {(meals.snacks || []).map((snack) => (
+          <MealSlotRow
+            key={snack.id}
+            mealType="snack"
+            meal={snack}
+            logDate={isoDate}
+            dailyLogId={log?.id}
+          />
+        ))}
+
+        {isAddingSnack ? (
+          <MealSlotRow
+            mealType="snack"
+            meal={null}
+            logDate={isoDate}
+            dailyLogId={log?.id}
+            defaultEditing
+            onCancelNew={() => setIsAddingSnack(false)}
+          />
+        ) : (
+          <AddSnackBtn
+            type="button"
+            className="no-print"
+            onClick={() => setIsAddingSnack(true)}
+          >
+            <Plus size={14} />
+            <span>میان‌وعده / دوز اصلاحی</span>
+          </AddSnackBtn>
+        )}
       </MealsList>
 
       {/* Optional Activity / Stress / Notes Drawer */}
@@ -135,6 +184,7 @@ export function DayCard({ day }) {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             onBlur={handleSaveNotes}
+            onKeyDown={handleKeyDown}
           />
         </ContextPanel>
       )}
@@ -230,19 +280,50 @@ const VitalInput = styled.input`
   padding: 2px 4px;
   border-radius: ${({ theme }) => theme.radii.sm};
   border: 1px solid transparent;
-  background-color: rgba(255, 255, 255, 0.75);
+  background-color: ${({ theme }) => theme.colors.bgInput};
+  color: ${({ theme }) => theme.colors.textPrimary};
 
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.colors.primary};
-    background-color: #ffffff;
   }
+`;
+
+const SaveHint = styled.span`
+  font-size: 0.72rem;
+  color: ${({ theme }) => theme.colors.primary};
+`;
+
+const ErrorHint = styled.span`
+  font-size: 0.72rem;
+  color: ${({ theme }) => theme.colors.glucose.low.text};
 `;
 
 const MealsList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 6px;
+`;
+
+const AddSnackBtn = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: ${({ theme }) => theme.radii.sm};
+  border: 1px dashed ${({ theme }) => theme.colors.borderStrong};
+  color: ${({ theme }) => theme.colors.textSecondary};
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.novorapid};
+    color: ${({ theme }) => theme.colors.novorapid};
+  }
 `;
 
 const ContextToggle = styled.button`
@@ -276,7 +357,7 @@ const Select = styled.select`
   padding: 4px 8px;
   border-radius: ${({ theme }) => theme.radii.sm};
   border: 1px solid ${({ theme }) => theme.colors.borderStrong};
-  background-color: ${({ theme }) => theme.colors.bgSubtle};
+  background-color: ${({ theme }) => theme.colors.bgInput};
   font-size: 0.8rem;
 `;
 
@@ -286,4 +367,5 @@ const NoteInput = styled.input`
   font-size: 0.8rem;
   border-radius: ${({ theme }) => theme.radii.sm};
   border: 1px solid ${({ theme }) => theme.colors.borderStrong};
+  background-color: ${({ theme }) => theme.colors.bgInput};
 `;

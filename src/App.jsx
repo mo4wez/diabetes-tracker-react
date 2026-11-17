@@ -1,13 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { ThemeProvider } from "styled-components";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { theme } from "./styles/theme";
+import { ThemeModeProvider } from "./context/ThemeModeContext";
 import { GlobalStyles } from "./styles/GlobalStyles";
 import { useAuth } from "./hooks/useAuth";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { AppLayout } from "./components/layout/AppLayout";
 import { LoginPage } from "./pages/LoginPage";
 import { WeeklyTrackerPage } from "./pages/WeeklyTrackerPage";
+import { MonthlyReportPage } from "./pages/MonthlyReportPage";
+import { CheckupsPage } from "./pages/CheckupsPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,7 +19,6 @@ const queryClient = new QueryClient({
   },
 });
 
-// Redirect away from /login if already signed in
 function PublicOnlyLogin() {
   const { session, loading } = useAuth();
   if (loading) return null;
@@ -29,7 +29,7 @@ function PublicOnlyLogin() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
+      <ThemeModeProvider>
         <GlobalStyles />
         <BrowserRouter>
           <Routes>
@@ -38,30 +38,15 @@ export default function App() {
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
                 <Route path="/" element={<WeeklyTrackerPage />} />
-                <Route
-                  path="/report"
-                  element={
-                    <div style={{ padding: 24 }}>
-                      گزارش ماهانه و نمودار (به‌زودی)
-                    </div>
-                  }
-                />
-                <Route
-                  path="/checkups"
-                  element={
-                    <div style={{ padding: 24 }}>
-                      آزمایش HbA1c و چکاپ سالانه (به‌زودی)
-                    </div>
-                  }
-                />
+                <Route path="/report" element={<MonthlyReportPage />} />
+                <Route path="/checkups" element={<CheckupsPage />} />
               </Route>
             </Route>
 
-            {/* Fallback for unknown URLs */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
-      </ThemeProvider>
+      </ThemeModeProvider>
     </QueryClientProvider>
   );
 }

@@ -2,8 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { getPersianWeekDays } from "../lib/persianDate";
 
-// Fetches daily_logs + nested meal_logs for a 7-day Persian week (Sat-Fri)
-// and merges them into a guaranteed 7-element array
+/**
+ * Fetches daily_logs + nested meal_logs for a 7-day Persian week (Sat-Fri)
+ * and merges them into a guaranteed 7-element array.
+ */
 async function fetchPersianWeek(anchorIsoDate) {
   const weekDays = getPersianWeekDays(anchorIsoDate);
   const startIso = weekDays[0].isoDate; // Saturday
@@ -41,14 +43,11 @@ async function fetchPersianWeek(anchorIsoDate) {
     throw new Error(error.message);
   }
 
-  // Index fetched rows by log_date ('YYYY-MM-DD') for O(1) lookup
   const logsByDate = new Map((data || []).map((row) => [row.log_date, row]));
 
-  // Merge into the 7-day skeleton
   return weekDays.map((day) => {
     const existingLog = logsByDate.get(day.isoDate) || null;
 
-    // Organize meals by meal_type ('breakfast', 'lunch', 'dinner', 'snack')
     const mealsByType = {
       breakfast: null,
       lunch: null,
@@ -67,7 +66,7 @@ async function fetchPersianWeek(anchorIsoDate) {
     }
 
     return {
-      ...day, // isoDate, jalaliDate, jalaliShort, dayNameFa, isToday
+      ...day,
       log: existingLog,
       meals: mealsByType,
     };
@@ -76,11 +75,11 @@ async function fetchPersianWeek(anchorIsoDate) {
 
 export function useWeeklyLogs(anchorIsoDate) {
   const weekDays = getPersianWeekDays(anchorIsoDate);
-  const weekStartIso = weekDays[0].isoDate; // Stable cache key for any day inside the same week
+  const weekStartIso = weekDays[0].isoDate;
 
   return useQuery({
     queryKey: ["weeklyLogs", weekStartIso],
     queryFn: () => fetchPersianWeek(weekStartIso),
-    staleTime: 1000 * 60 * 5, // Keep fresh for 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 }
