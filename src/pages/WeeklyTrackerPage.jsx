@@ -1,8 +1,8 @@
 import { useState } from "react";
 import styled from "styled-components";
+import { Printer } from "lucide-react";
 import { getTodayIso, shiftWeek } from "../lib/persianDate";
 import { useWeeklyLogs } from "../hooks/useWeeklyLogs";
-import { useAuth } from "../hooks/useAuth";
 import { DayCard } from "../components/tracker/DayCard";
 import { CheckupAlertBanner } from "../components/tracker/CheckupAlertBanner";
 
@@ -14,7 +14,6 @@ export function WeeklyTrackerPage() {
     isError,
     error,
   } = useWeeklyLogs(anchorDate);
-  const { signOut } = useAuth();
 
   const weekRangeLabel =
     weekDays && weekDays.length === 7
@@ -45,8 +44,10 @@ export function WeeklyTrackerPage() {
         </NavControls>
 
         <RightActions>
-          <PrintBtn onClick={() => window.print()}>چاپ گزارش</PrintBtn>
-          <LogoutBtn onClick={signOut}>خروج</LogoutBtn>
+          <PrintBtn onClick={() => window.print()}>
+            <Printer size={15} />
+            <span>چاپ گزارش</span>
+          </PrintBtn>
         </RightActions>
       </TopBar>
 
@@ -79,6 +80,10 @@ const PageWrapper = styled.div`
   max-width: 1320px;
   margin: 0 auto;
   padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.md};
+
+  @media (max-width: 768px) {
+    padding: ${({ theme }) => theme.spacing.md} 12px;
+  }
 `;
 
 const TopBar = styled.header`
@@ -93,12 +98,25 @@ const TopBar = styled.header`
   padding: ${({ theme }) => theme.spacing.md};
   margin-bottom: ${({ theme }) => theme.spacing.lg};
   box-shadow: ${({ theme }) => theme.shadows.sm};
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px;
+    margin-bottom: ${({ theme }) => theme.spacing.md};
+  }
 `;
 
 const BrandTitle = styled.h1`
   font-size: 1.1rem;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.textPrimary};
+
+  @media (max-width: 768px) {
+    text-align: center;
+    font-size: 1rem;
+  }
 `;
 
 const NavControls = styled.div`
@@ -106,6 +124,14 @@ const NavControls = styled.div`
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
 `;
 
 const CurrentWeekLabel = styled.span`
@@ -114,6 +140,11 @@ const CurrentWeekLabel = styled.span`
   min-width: 150px;
   text-align: center;
   color: ${({ theme }) => theme.colors.primary};
+
+  @media (max-width: 768px) {
+    min-width: 0;
+    font-size: 0.88rem;
+  }
 `;
 
 const NavBtn = styled.button`
@@ -123,10 +154,16 @@ const NavBtn = styled.button`
   border: 1px solid ${({ theme }) => theme.colors.borderStrong};
   font-size: 0.85rem;
   font-weight: 600;
+  white-space: nowrap;
 
   &:hover {
     border-color: ${({ theme }) => theme.colors.primary};
     color: ${({ theme }) => theme.colors.primary};
+  }
+
+  @media (max-width: 768px) {
+    padding: 7px 10px;
+    font-size: 0.8rem;
   }
 `;
 
@@ -134,16 +171,30 @@ const TodayBtn = styled(NavBtn)`
   background-color: ${({ theme }) => theme.colors.primaryLight};
   border-color: transparent;
   color: ${({ theme }) => theme.colors.primary};
+
+  @media (max-width: 768px) {
+    grid-column: 1 / -1;
+    width: 100%;
+    padding: 8px;
+  }
 `;
 
 const RightActions = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 const PrintBtn = styled.button`
-  padding: 6px 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 14px;
   border-radius: ${({ theme }) => theme.radii.md};
   background-color: ${({ theme }) => theme.colors.primary};
   color: #ffffff;
@@ -153,10 +204,11 @@ const PrintBtn = styled.button`
   &:hover {
     background-color: ${({ theme }) => theme.colors.primaryHover};
   }
-`;
 
-const LogoutBtn = styled(NavBtn)`
-  color: ${({ theme }) => theme.colors.textSecondary};
+  @media (max-width: 768px) {
+    width: 100%;
+    padding: 8px 14px;
+  }
 `;
 
 const PrintHeader = styled.div`
@@ -174,6 +226,10 @@ const DaysGrid = styled.main`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: ${({ theme }) => theme.spacing.md};
+
+  @media (max-width: 400px) {
+    grid-template-columns: 1fr;
+  }
 
   @media print {
     grid-template-columns: repeat(2, 1fr);
