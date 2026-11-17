@@ -2,14 +2,14 @@ import { useState } from "react";
 import styled, { useTheme } from "styled-components";
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ReferenceLine,
+  ReferenceArea,
 } from "recharts";
 import { Printer } from "lucide-react";
 import { getTodayIso, shiftPersianMonth } from "../lib/persianDate";
@@ -19,6 +19,7 @@ import { getGlucoseTheme } from "../styles/theme";
 export function MonthlyReportPage() {
   const theme = useTheme();
   const [anchorDate, setAnchorDate] = useState(() => getTodayIso());
+  const [chartFilter, setChartFilter] = useState("all");
   const { data, isLoading, isError, error } = useMonthlyLogs(anchorDate);
 
   const chartData = (data?.days || [])
@@ -176,93 +177,204 @@ export function MonthlyReportPage() {
           )}
 
           {/* Recharts Trend Visualization (Screen Only) */}
+          {/* Recharts Trend Visualization (Screen Only) */}
           {chartData.length > 0 && (
             <ChartCard className="no-print">
-              <SectionTitle>
-                نمودار روند تغییرات قند خون در {data.monthLabel}
-              </SectionTitle>
-              <ChartContainer>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart
-                    data={chartData}
-                    margin={{ top: 10, right: 20, left: 0, bottom: 5 }}
+              <ChartHeader>
+                <SectionTitle style={{ marginBottom: 0 }}>
+                  روند تغییرات قند خون در {data.monthLabel}
+                </SectionTitle>
+
+                <ChartFilterGroup>
+                  <FilterPill
+                    type="button"
+                    $active={chartFilter === "all"}
+                    onClick={() => setChartFilter("all")}
                   >
+                    همه
+                  </FilterPill>
+                  <FilterPill
+                    type="button"
+                    $active={chartFilter === "fasting"}
+                    onClick={() => setChartFilter("fasting")}
+                  >
+                    ناشتا
+                  </FilterPill>
+                  <FilterPill
+                    type="button"
+                    $active={chartFilter === "postMeal"}
+                    onClick={() => setChartFilter("postMeal")}
+                  >
+                    بعد غذا
+                  </FilterPill>
+                </ChartFilterGroup>
+              </ChartHeader>
+
+              <ChartLegendRow>
+                {(chartFilter === "all" || chartFilter === "fasting") && (
+                  <ChartLegendBadge $color="#0284c7">ناشتا</ChartLegendBadge>
+                )}
+                {(chartFilter === "all" || chartFilter === "postMeal") && (
+                  <>
+                    <ChartLegendBadge $color="#16a34a">صبحانه</ChartLegendBadge>
+                    <ChartLegendBadge $color="#d97706">ناهار</ChartLegendBadge>
+                    <ChartLegendBadge $color="#9333ea">شام</ChartLegendBadge>
+                  </>
+                )}
+              </ChartLegendRow>
+
+              <ChartContainer>
+                <ResponsiveContainer width="100%" height={250}>
+                  <AreaChart
+                    data={chartData}
+                    margin={{ top: 12, right: 12, left: 0, bottom: 4 }}
+                  >
+                    <defs>
+                      <linearGradient
+                        id="fastingGrad"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="5%"
+                          stopColor="#0284c7"
+                          stopOpacity={0.22}
+                        />
+                        <stop
+                          offset="95%"
+                          stopColor="#0284c7"
+                          stopOpacity={0.0}
+                        />
+                      </linearGradient>
+                    </defs>
+
                     <CartesianGrid
                       strokeDasharray="3 3"
+                      vertical={false}
                       stroke={theme.colors.border}
                     />
+
+                    {/* Subtle green target range band (70 - 180 mg/dL) */}
+                    <ReferenceArea
+                      y1={70}
+                      y2={180}
+                      fill="#16a34a"
+                      fillOpacity={theme.mode === "dark" ? 0.08 : 0.05}
+                    />
+
                     <XAxis
                       dataKey="day"
+                      axisLine={false}
+                      tickLine={false}
                       stroke={theme.colors.textSecondary}
-                      tick={{ fontSize: 12 }}
+                      tick={{ fontSize: 11 }}
+                      tickMargin={8}
                     />
+
                     <YAxis
-                      domain={[40, "auto"]}
+                      width={34}
+                      domain={[
+                        50,
+                        (dataMax) =>
+                          Math.max(190, Math.ceil((dataMax + 15) / 10) * 10),
+                      ]}
+                      axisLine={false}
+                      tickLine={false}
                       stroke={theme.colors.textSecondary}
-                      tick={{ fontSize: 12 }}
+                      tick={{ fontSize: 11 }}
                     />
+
                     <Tooltip
                       contentStyle={{
                         backgroundColor: theme.colors.bgSurface,
                         borderColor: theme.colors.borderStrong,
-                        borderRadius: "8px",
+                        borderRadius: "10px",
+                        boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
+                        fontSize: "12px",
                         direction: "rtl",
                       }}
+                      labelFormatter={(label) => `روز ${label} ماه`}
                     />
-                    <Legend />
+
                     <ReferenceLine
                       y={70}
                       stroke={theme.colors.glucose.low.text}
                       strokeDasharray="4 4"
-                      label={{
-                        value: "حداقل (70)",
-                        position: "insideBottomRight",
-                        fontSize: 11,
-                      }}
+                      strokeOpacity={0.75}
                     />
                     <ReferenceLine
                       y={180}
                       stroke={theme.colors.glucose.elevated.text}
                       strokeDasharray="4 4"
-                      label={{
-                        value: "هدف بعد غذا (180)",
-                        position: "insideTopRight",
-                        fontSize: 11,
-                      }}
+                      strokeOpacity={0.75}
                     />
-                    <Line
-                      type="monotone"
-                      dataKey="ناشتا"
-                      stroke="#0284c7"
-                      strokeWidth={2.5}
-                      dot={{ r: 3 }}
-                      connectNulls
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="صبحانه"
-                      stroke="#16a34a"
-                      strokeWidth={2}
-                      dot={{ r: 3 }}
-                      connectNulls
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="ناهار"
-                      stroke="#d97706"
-                      strokeWidth={2}
-                      dot={{ r: 3 }}
-                      connectNulls
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="شام"
-                      stroke="#9333ea"
-                      strokeWidth={2}
-                      dot={{ r: 3 }}
-                      connectNulls
-                    />
-                  </LineChart>
+
+                    {(chartFilter === "all" || chartFilter === "fasting") && (
+                      <Area
+                        type="monotone"
+                        dataKey="ناشتا"
+                        stroke="#0284c7"
+                        strokeWidth={2.5}
+                        fill="url(#fastingGrad)"
+                        dot={{
+                          r: 3.5,
+                          fill: theme.colors.bgSurface,
+                          strokeWidth: 2,
+                        }}
+                        activeDot={{ r: 5 }}
+                        connectNulls
+                      />
+                    )}
+
+                    {(chartFilter === "all" || chartFilter === "postMeal") && (
+                      <>
+                        <Area
+                          type="monotone"
+                          dataKey="صبحانه"
+                          stroke="#16a34a"
+                          strokeWidth={2}
+                          fill="none"
+                          dot={{
+                            r: 3.5,
+                            fill: theme.colors.bgSurface,
+                            strokeWidth: 2,
+                          }}
+                          activeDot={{ r: 5 }}
+                          connectNulls
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="ناهار"
+                          stroke="#d97706"
+                          strokeWidth={2}
+                          fill="none"
+                          dot={{
+                            r: 3.5,
+                            fill: theme.colors.bgSurface,
+                            strokeWidth: 2,
+                          }}
+                          activeDot={{ r: 5 }}
+                          connectNulls
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="شام"
+                          stroke="#9333ea"
+                          strokeWidth={2}
+                          fill="none"
+                          dot={{
+                            r: 3.5,
+                            fill: theme.colors.bgSurface,
+                            strokeWidth: 2,
+                          }}
+                          activeDot={{ r: 5 }}
+                          connectNulls
+                        />
+                      </>
+                    )}
+                  </AreaChart>
                 </ResponsiveContainer>
               </ChartContainer>
             </ChartCard>
@@ -667,6 +779,61 @@ const SectionTitle = styled.h2`
 const ChartContainer = styled.div`
   width: 100%;
   direction: ltr;
+`;
+
+const ChartHeader = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+`;
+
+const ChartFilterGroup = styled.div`
+  display: inline-flex;
+  background-color: ${({ theme }) => theme.colors.bgSubtle};
+  padding: 3px;
+  border-radius: ${({ theme }) => theme.radii.md};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+`;
+
+const FilterPill = styled.button`
+  padding: 4px 10px;
+  border-radius: ${({ theme }) => theme.radii.sm};
+  font-size: 0.78rem;
+  font-weight: 600;
+  background-color: ${({ theme, $active }) =>
+    $active ? theme.colors.primary : "transparent"};
+  color: ${({ theme, $active }) =>
+    $active ? "#ffffff" : theme.colors.textSecondary};
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+`;
+
+const ChartLegendRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 8px;
+  font-size: 0.78rem;
+`;
+
+const ChartLegendBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  font-weight: 600;
+
+  &::before {
+    content: "";
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background-color: ${({ $color }) => $color};
+  }
 `;
 
 const TableWrapper = styled.div`
